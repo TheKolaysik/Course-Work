@@ -1,43 +1,62 @@
-//Автор: Толстых Николай
 #include <stdio.h>
 #include <locale.h>
 #include <stdlib.h>
 
+#define MAX_RAND_Z 100
+#define MIN_RAND_Z -100
 
 
-
-int** create_matrix(int rows, int cols);                                        /* Функция инициализации динамического массива  */
 int** full_rand_matrix(int** matrix, int rows, int cols);                        /* Функция заполнения массива случайными числами */
 int** full_manual_matrix(int** matrix, int rows, int cols);                      /* Функция заполнения массива вручную */
-int** sort_matrix(int** matrix, int rows, int cols);                             /* Функция сортировки массива */
-int** copy_matrix(int** original_matrix, int** new_matrix, int rows, int cols);  /* Функция копирования значений из массива в массив */
+int** sort_matrix(int** matrix, int* param_matrix, int rows, int cols);         /* Функция сортировки матрицы */
 void print_matrix(int** matrix, int rows, int cols);                            /* Функция вывода массива в консоль */
 int count_cols_no_nulls(int** matrix, int rows, int cols);                      /* Функция подсчёта количества ненулевых строк */
 
 
 int main() {
     setlocale(LC_ALL, "RUS");
+    srand(time(NULL));
     char text;
     int flag = 1;
+    int flag_sort_matrix = 0;
     int number_fill, number, count_cols;
     int rows, cols;
-    int **original_matrix, **new_matrix;
-    printf("Автор работы: Толстых Николай, группа бИД-241\n");
-    printf("Тема:\t Дана целочисленная прямоугольная матрица.\n");
-    printf("\t Определить кол-во столбцов, не содержащих ни одного нулевого элемента.\n");
-    printf("\t Характеристика строки сумма её положительных чётных элементов.\n");
-    printf("\t Переставляя строки заданной матрицы, расположить их в соответствии с ростом характеристик.\n\n");
+    int **original_matrix;
+    int *param_sort_matrix;
+    printf("***************************************************************************************\n");
+    printf("*              Автор работы: Толстых Николай, группа бИД-241                          *\n");
+    printf("*      Тема:   Дана целочисленная прямоугольная матрица.                              *\n");
+    printf("*              Определить кол-во столбцов, не содержащих ни одного нулевого элемента  *\n");
+    printf("*              Сортировку столбцов выполнить методом расчёски                         *\n");
+    printf("*              Характеристикой столбца являются элементы, стоящие по диагонали        *\n");
+    printf("***************************************************************************************\n");
+ 
+    while (flag) {
+        printf("Введите число строк > ");
+        scanf("%d", &rows);
+        printf("Введите число столбцов > ");
+        getchar();
+        scanf("%d", &cols);
 
-    printf("Введите число строк > ");
-    scanf("%d", &rows);
-    printf("Введите число столбцов > ");
-    scanf("%d", &cols);
-
-    original_matrix = create_matrix(rows, cols);
-    new_matrix = create_matrix(rows, cols);
-    printf("\nВыберите способ заполнения массива:\n");
-    printf("1. Ручное заполнение\n");
-    printf("2. Заполнение случайными числами\n");
+        original_matrix = (int**)malloc(rows * sizeof(int*));
+        if (original_matrix != NULL) {
+            for (int i = 0; i < rows; i++) {
+                original_matrix[i] = (int*)malloc(cols * sizeof(int));
+            }
+            flag = 0;
+        }
+        else {
+            printf("Ошибка! Повторите попытку ввода!\n");
+            getchar();
+        }
+        param_sort_matrix = (int*)malloc(cols * sizeof(int));
+    }
+    printf("\n***************************************************\n");
+    printf("*      Выберите способ заполнения массива:        *\n");
+    printf("*         1. Ручное заполнение                    *\n");
+    printf("*         2. Заполнение случайными числами        *\n");
+    printf("*         3. Завершить работу                     *\n");
+    printf("***************************************************\n");
     printf("Введите номер команды > ");
     scanf("%d", &number_fill);
 
@@ -48,21 +67,28 @@ int main() {
     case 2:
             full_rand_matrix(original_matrix, rows, cols);
             break;
+    case 3:
+            return 0;
     default:
             printf("\nКоманда введена некоректно!\n");
-            break;
+            return 0;
     }
     
     count_cols = count_cols_no_nulls(original_matrix, rows, cols);
 
-    copy_matrix(original_matrix, new_matrix, rows, cols);
-    sort_matrix(new_matrix, rows, cols);
     
     while (1) {
-        printf("\nВыберите команду:\n");
-        printf("1. Вывести исходную матрицу\n");
-        printf("2. Вывести преобразованную матрицу\n");
-        printf("3. Вывести количество ненулевых слолбцов\n");
+        printf("\n***************************************************\n");
+        printf("*    Выберите команду:                            *\n");
+        if (!flag_sort_matrix) {
+            printf("*        1. Вывести исходную матрицу              *\n");
+        } else {
+            printf("*        1. Вывести сортированную матрицу         *\n");
+        }
+        printf("*        2. Вывести количество ненулевых слолбцов *\n");
+        printf("*        3. Выполнить сортировку                  *\n");
+        printf("*        4. Завершить работу                      *\n");
+        printf("***************************************************\n");
         printf("Введите номер команды > ");
         scanf("%d", &number);
         printf("\n");
@@ -72,11 +98,14 @@ int main() {
                 print_matrix(original_matrix, rows, cols);
                 break;
         case 2:
-                print_matrix(new_matrix, rows, cols);
-                break;
-        case 3:
                 printf("Количество столбцов без нулей - %d\n", count_cols);
                 break;
+        case 3:
+                sort_matrix(original_matrix, param_sort_matrix, rows, cols);
+                flag_sort_matrix = 1;
+                break;
+        case 4:
+                return 0;
         default:
                 printf("Номер команды введён некоректно!\n");
                 break;
@@ -88,59 +117,11 @@ int main() {
     }
     for (int i = 0; i < rows; i++) {
         free(original_matrix[i]);
-        free(new_matrix[i]);
     }
     free(original_matrix);
-    free(new_matrix);
+    free(param_sort_matrix);
 }
 
-// Функция сортировки матрицы 
-int** sort_matrix(int** matrix, int rows, int cols) {
-    int one_specific, two_specific;
-    int one, two;
-    int elem_matrix;
-
-
-    for (int n = 0; n < rows - 1; n++) {
-        for (int i = 0; i < rows - 1; i++) {
-            one_specific = 0;
-            two_specific = 0;
-            for (int j_o = 0; j_o < cols; j_o++) {
-                elem_matrix = *(*(matrix + i) + j_o);
-                if (elem_matrix > 0 && elem_matrix % 2 == 0) {
-                    one_specific += elem_matrix;
-                }
-            }
-            for (int j_t = 0; j_t < cols; j_t++) {
-                elem_matrix = *(*(matrix + i + 1) + j_t);
-                if (elem_matrix > 0 && elem_matrix % 2 == 0) {
-                    two_specific += elem_matrix;
-                }
-            }
-            if (one_specific > two_specific) {
-                for (int j = 0; j < cols; j++) {
-                    one = *(*(matrix + i) + j);
-                    two = *(*(matrix + i + 1) + j);
-                    *(*(matrix + i) + j) = two;
-                    *(*(matrix + i + 1) + j) = one;
-
-                }
-            }
-        }
-    }
-    return matrix;
-}
-
-// Функция инициализации двухмерного массива
-int** create_matrix(int rows, int cols) {
-    int** matrix = (int**)malloc(rows * sizeof(int*));
-    if (matrix != NULL) {
-        for (int i = 0; i < rows; i++) {
-            matrix[i] = (int*)malloc(cols * sizeof(int));;
-        }
-    }
-    return matrix;
-}
 
 // Функция ручного заполнения массива
 int** full_manual_matrix(int** matrix, int rows, int cols) {
@@ -155,29 +136,19 @@ int** full_manual_matrix(int** matrix, int rows, int cols) {
 
 // Функция заполнения массива значениями
 int** full_rand_matrix(int** matrix, int rows, int cols) {
-    srand(time(NULL));
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            *(*(matrix + i) + j) = rand();
+            *(*(matrix + i) + j) = rand() % (MAX_RAND_Z - MIN_RAND_Z + 1) + MIN_RAND_Z;
         }
     }
     return matrix;
 }
 
-// Функция копирования элементов одной матриццы в другую
-int** copy_matrix(int** original_matrix, int** new_matrix, int rows, int cols) {
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            *(*(new_matrix + i) + j) = *(*(original_matrix + i) + j);
-        }
-    }
-    return new_matrix;
-}
 
 // Функция определения количества столбцов, не содержащих нулей
 int count_cols_no_nulls(int** matrix, int rows, int cols) {
     int count_cols = 0;
-    for (int j = 0; j < cols; j++) {
+    for (int j = 0; j < cols; j++) { 
         int count = 0;
         for (int i = 0; i < rows; i++) {
             if (*(*(matrix + i) + j) != 0) {
@@ -191,7 +162,7 @@ int count_cols_no_nulls(int** matrix, int rows, int cols) {
     return count_cols;
  }
 
-// Функция печали двухмерного массива в консоль
+// Функция печати двухмерного массива в консоль
 void print_matrix(int** matrix, int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -199,5 +170,39 @@ void print_matrix(int** matrix, int rows, int cols) {
         }
         printf("\n");
     }
+}
+
+// Функция сортировки методом расчёски
+int** sort_matrix(int** matrix, int* param_matrix, int rows, int cols) {
+    float tab = (float)rows / (float)cols;
+    int one_index, two_index, temp, temp_param;
+    int height = cols - 1;
+    float up_row, down_row;
+    up_row = 0, down_row = rows - 1;
+
+    for (int j = 0; j < cols; j++) {
+        param_matrix[j] = matrix[(int)(up_row)][j] + matrix[(int)(down_row)][j];
+        up_row += tab;
+        down_row -= tab;
+    }
+
+    while (height != 0) {
+        for (int j = 0; j < cols - height; j++) {
+            one_index = j;
+            two_index = j + height;
+            if (param_matrix[one_index] > param_matrix[two_index]) {
+                temp_param = param_matrix[one_index];
+                param_matrix[one_index] = param_matrix[two_index];
+                param_matrix[two_index] = temp_param;
+                for (int i = 0; i < rows; i++) {
+                    temp = matrix[i][one_index];
+                    matrix[i][one_index] = matrix[i][two_index];
+                    matrix[i][two_index] = temp;
+                }
+            }
+        }
+        height -= 1;
+    }
+    return matrix;
 }
 
